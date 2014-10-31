@@ -9,10 +9,15 @@ package com.proc;
  */
 public class ProcListener {
 
-    protected String output;
+    protected String standardOutput, errorOutput;
     
     public ProcListener() {
-        this.output = "";
+        reset();
+    }
+    
+    private void reset() {
+        this.standardOutput = "";
+        this.errorOutput = "";
     }
 
     /**
@@ -20,17 +25,26 @@ public class ProcListener {
      * 
      * Resets any captured output from the previous run.
      */
-    public void start() {
-        this.output = "";
+    public void start(String command) {
+        reset();
     }
 
     /**
-     * Proc is executing and ha captured a line of the output.
+     * Proc is executing and has captured a line of the output.
      * 
      * @param line  The next line of input
      */
     public void line(String line) {
-        this.output += line + "\n";
+        this.standardOutput += line + "\n";
+    }
+    
+    /**
+     * Proc is executing and has captured an error line of the output.
+     * 
+     * @param line  The next line of input
+     */
+    public void errorLine(String line) {
+        this.errorOutput += line + "\n";
     }
     
     /**
@@ -39,6 +53,18 @@ public class ProcListener {
      * The complete output of the executed proc is also provided.
      * 
      * @param output  The complete output
+     * @param errOutput The 
+     * @param exitValue Exit value of Proc after completing
      */
-    public void finished(String output) {}
+    public void finished(String output, String errOutput, int exitValue) {}
+    
+    
+    
+    public String getStandardOutput() {
+        return standardOutput;
+    }
+    
+    public String getErrorOutput() {
+        return errorOutput;
+    }
 }

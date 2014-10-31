@@ -23,7 +23,7 @@ public class Proc {
         listeners.add(listener);
     }
     
-    public String exec() throws IOException {
+    public String exec() throws IOException, InterruptedException {
         return executeCommand(getCommand());
     }
     
@@ -31,26 +31,42 @@ public class Proc {
         return command;
     }
     
-    private String executeCommand(String command) throws IOException {
-        notifyListenersOfStart();
+    private String executeCommand(String command) throws IOException, InterruptedException {
+        notifyListenersOfStart(command);
         
         Process proc = Runtime.getRuntime().exec(command);
+        
+        ArrayList<String> arr = new ArrayList<>();
+        
         BufferedReader procReader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+        BufferedReader errReader = new BufferedReader(new InputStreamReader(proc.getErrorStream()));
 
-        // read output of nmap command
-        String line, output = "";
-        while ((line = procReader.readLine()) != null) {
-            notifyListenersOfLine(line);
-            output += line + "\n";
+        // read output of command
+        String line = null, standardOutput = "",
+               errorLine = null, errorOutput = "";
+        while ((line = procReader.readLine()) != null || (errorLine = errReader.readLine()) != null) {
+            if (line != null) {
+                notifyListenersOfLine(line);
+                standardOutput += line + "\n";
+            }
+            
+            if (errorLine != null) {
+                notifyListenersOfErrorLine(errorLine);
+                errorOutput += errorLine + "\n";
+            }
         }
         
-        notifyListenersOfFinished(output);
-        return output;
+        proc.waitFor();
+        int exitValue = proc.exitValue();
+        proc.destroy();
+        
+        notifyListenersOfFinished(standardOutput, errorOutput, exitValue);
+        return standardOutput;
     }
     
-    protected void notifyListenersOfStart() {
+    protected void notifyListenersOfStart(String command) {
         for (ProcListener listener : listeners) {
-            listener.start();
+            listener.start(command);
         }
     }
     
@@ -60,9 +76,15 @@ public class Proc {
         }
     }
     
-    protected void notifyListenersOfFinished(String output) {
+    protected void notifyListenersOfErrorLine(String line) {
         for (ProcListener listener : listeners) {
-            listener.finished(output);
+            listener.errorLine(line);
+        }
+    }
+    
+    protected void notifyListenersOfFinished(String standardOutput, String errorOutput, int exitValue) {
+        for (ProcListener listener : listeners) {
+            listener.finished(standardOutput, errorOutput, exitValue);
         }
     }
     
