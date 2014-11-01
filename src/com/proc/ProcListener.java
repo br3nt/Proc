@@ -1,5 +1,7 @@
 package com.proc;
 
+import java.util.List;
+
 /**
  * The default implementation of ProcListener.
  * 
@@ -24,8 +26,9 @@ public class ProcListener {
      * Proc is about to start/restart.
      * 
      * Resets any captured output from the previous run.
+     * @param command
      */
-    public void start(String command) {
+    public void start(String command, List<String> parameters) {
         reset();
     }
 

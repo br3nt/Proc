@@ -3,7 +3,9 @@ package com.proc;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.ProcessBuilder.Redirect;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -12,11 +14,22 @@ import java.util.ArrayList;
 public class Proc {
     
     private String command;
+    private ArrayList<String> parameters;
+    
     private ArrayList<ProcListener> listeners;
     
     public Proc(String command) {
         this.command = command;
+        this.parameters = new ArrayList<>();
         this.listeners = new ArrayList<>();
+    }
+    
+    public void addParameter(String parameter) {
+        parameters.add(parameter);
+    }
+    
+    public void addParameter(String format, Object... parameter) {
+        parameters.add(String.format(format, parameter));
     }
     
     public void addListener(ProcListener listener) {
@@ -24,19 +37,27 @@ public class Proc {
     }
     
     public String exec() throws IOException, InterruptedException {
-        return executeCommand(getCommand());
+        return executeCommand(getCommand(), getParameters());
     }
     
     public String getCommand() {
         return command;
     }
     
-    private String executeCommand(String command) throws IOException, InterruptedException {
-        notifyListenersOfStart(command);
+    public List<String> getParameters() {
+        return new ArrayList<>(parameters);
+    }
+    
+    private String executeCommand(String command, List<String> parameters) throws IOException, InterruptedException {
         
-        Process proc = Runtime.getRuntime().exec(command);
+        notifyListenersOfStart(command, parameters);
         
-        ArrayList<String> arr = new ArrayList<>();
+        ArrayList<String> cmd = new ArrayList<>(parameters); // clone the params
+        cmd.add(0, command); // insert command at the start
+        
+        ProcessBuilder pb = new ProcessBuilder(cmd);
+        Process proc = pb.start();
+//        Process proc = Runtime.getRuntime().exec(command);
         
         BufferedReader procReader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
         BufferedReader errReader = new BufferedReader(new InputStreamReader(proc.getErrorStream()));
@@ -64,9 +85,9 @@ public class Proc {
         return standardOutput;
     }
     
-    protected void notifyListenersOfStart(String command) {
+    protected void notifyListenersOfStart(String command, List<String> parameters) {
         for (ProcListener listener : listeners) {
-            listener.start(command);
+            listener.start(command, new ArrayList<>(parameters));
         }
     }
     
