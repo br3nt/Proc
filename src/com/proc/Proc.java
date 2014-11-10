@@ -28,9 +28,14 @@ public class Proc {
         parameters.add(parameter);
     }
     
-    public void addParameter(String format, Object... parameter) {
-        parameters.add(String.format(format, parameter));
+    public void addParameter(String option, String parameter) {
+        parameters.add(option);
+        parameters.add(parameter);
     }
+    
+//    public void addParameter(String format, Object... parameter) {
+//        parameters.add(String.format(format, parameter));
+//    }
     
     public void addListener(ProcListener listener) {
         listeners.add(listener);
